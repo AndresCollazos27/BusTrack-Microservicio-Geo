@@ -1,17 +1,8 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const router = express.Router();
+const authController = require('../controller/auth.controller');
 
-router.post('/login', (req, res) => {
-  const { user } = req.body;
+router.post('/login', authController.login);
 
-  if (!user) {
-    return res.status(400).json({ message: 'Falta el nombre de usuario' });
-  }
-
-  // Generar token con el nombre de usuario
-  const token = jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.json({ token });
-});
 
 module.exports = router;
