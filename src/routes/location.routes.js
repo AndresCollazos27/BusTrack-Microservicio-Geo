@@ -7,4 +7,6 @@ router.get('/', authMiddleware, locationController.getAllLocations);
 
 router.get('/:deviceId', authMiddleware, locationController.getLocation);
 
+router.post('/add', authMiddleware, locationController.createDevice);
+
 module.exports = router;

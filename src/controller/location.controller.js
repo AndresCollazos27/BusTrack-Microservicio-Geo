@@ -19,3 +19,12 @@ exports.getAllLocations = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener ubicaciones', error: err.message });
   }
 };
+
+exports.createDevice = async (req, res) => {
+  try {
+    const resultado = await traccarService.createDevice(req.body);
+    res.json(resultado);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message, detalle: error.detalle });
+  }
+};

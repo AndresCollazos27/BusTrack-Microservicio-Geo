@@ -1,31 +1,34 @@
 const axios = require('axios');
 const qs = require('qs');
+const { USERNAME, PASSWORD, TRACCAR_HTTP_URL } = require('../config/traccar');
 
-const TRACCAR_URL = process.env.TRACCAR_URL;
-const DEVICE_ID = process.env.DEVICE_ID;
-
-let sessionCookie = '';
+let sessionCookie = null;
 
 async function createSession() {
-  const response = await axios.post(`${TRACCAR_URL}/api/session`, qs.stringify({
-    email: process.env.TRACCAR_USER,
-    password: process.env.TRACCAR_PASS
-  }), {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-  });
+  const response = await axios.post(
+    `${TRACCAR_HTTP_URL}/api/session`,
+    qs.stringify({ email: USERNAME, password: PASSWORD }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
 
   sessionCookie = response.headers['set-cookie'][0].split(';')[0];
 }
 
-exports.getDeviceLocation = async (deviceId) => {
-  if (!sessionCookie) await createSession();
+async function ensureSession() {
+  if (!sessionCookie) {
+    await createSession();
+  }
+}
 
-  const response = await axios.get(`${TRACCAR_URL}/api/positions`, {
+exports.getDeviceLocation = async (deviceId) => {
+  await ensureSession();
+
+  const response = await axios.get(`${TRACCAR_HTTP_URL}/api/positions`, {
     headers: { Cookie: sessionCookie }
   });
 
   const positions = response.data;
-  const target = positions.find(pos => pos.deviceId.toString() === deviceId);
+  const target = positions.find(pos => pos.deviceId.toString() === deviceId.toString());
 
   if (!target) throw new Error('Dispositivo no encontrado');
 
@@ -38,15 +41,13 @@ exports.getDeviceLocation = async (deviceId) => {
 };
 
 exports.getAllDeviceLocations = async () => {
-  if (!sessionCookie) await createSession();
+  await ensureSession();
 
-  const response = await axios.get(`${TRACCAR_URL}/api/positions`, {
+  const response = await axios.get(`${TRACCAR_HTTP_URL}/api/positions`, {
     headers: { Cookie: sessionCookie }
   });
 
-  const positions = response.data;
-
-  return positions.map(pos => ({
+  return response.data.map(pos => ({
     deviceId: pos.deviceId,
     latitude: pos.latitude,
     longitude: pos.longitude,
@@ -55,3 +56,32 @@ exports.getAllDeviceLocations = async () => {
   }));
 };
 
+exports.createDevice = async (data) => {
+  await ensureSession();
+
+  if (!data.name || !data.uniqueId) {
+    throw new Error("Se requieren los campos 'name' y 'uniqueId'");
+  }
+
+  const response = await axios.post(`${TRACCAR_HTTP_URL}/api/devices`, data, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cookie': sessionCookie
+    }
+  });
+
+  if (response.status !== 200) {
+    throw new Error(`Error al crear dispositivo: ${response.status} - ${response.statusText}`);
+  }
+
+  const dispositivo = response.data;
+
+  return {
+    mensaje: 'Dispositivo creado correctamente',
+    dispositivo: {
+      id: dispositivo.id,
+      name: dispositivo.name,
+      uniqueId: dispositivo.uniqueId
+    }
+  };
+};
