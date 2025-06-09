@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const locationRoutes = require('./routes/location.routes');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
-const authMiddleware = require('./middlewares/auth.middleware');
+const authMiddleware = require('./middleware/auth.middleware');
 
 const app = express();
 
