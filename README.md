@@ -1,4 +1,4 @@
-## Micro servicio con Traccar 
+## Microservicio con Traccar 
 Este proyecto es una API REST construida con Node.js y Express, que permite autenticar usuarios mediante JWT y gestionar ubicaciones de dispositivos usando la API de Traccar.
 
 ---
